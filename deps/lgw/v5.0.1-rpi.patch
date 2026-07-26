@@ -950,7 +950,7 @@ index b3046a9..a01f65b 100644
  /* -------------------------------------------------------------------------- */
  /* --- PRIVATE TYPES -------------------------------------------------------- */
  
-@@ -72,7 +72,7 @@ Maintainer: Michael Coracin
+@@ -74,7 +74,7 @@ struct lgw_radio_type_version_s {
  /* -------------------------------------------------------------------------- */
  /* --- PRIVATE CONSTANTS ---------------------------------------------------- */
  
@@ -959,12 +959,29 @@ index b3046a9..a01f65b 100644
  
  const struct lgw_sx127x_FSK_bandwidth_s sx127x_FskBandwidths[] =
  {
-@@ -467,7 +467,7 @@ int lgw_setup_sx125x(uint8_t rf_chain, uint8_t rf_clkout, bool rf_enable, uint8_
-             sx125x_write(rf_chain, 0x00, 3); /* Enable RX (PLL+FE) */
+@@ -460,16 +460,22 @@ int lgw_setup_sx125x(uint8_t rf_chain, uint8_t rf_clkout, bool rf_enable, uint8_
+         sx125x_write(rf_chain, 0x03,0xFF & part_frac); /* Least Significant Byte */
+ 
+         /* start and PLL lock */
++        /* Enable the oscillator and PLL ONCE, then poll the lock bit without
++         * re-writing the enable registers. The original code re-issued the
++         * enable writes on every loop iteration, which could restart PLL
++         * settling and, combined with a too-short wait, raced on fast builds
++         * (lock only succeeded when DEBUG logging padded the loop). */
++        sx125x_write(rf_chain, 0x00, 1); /* enable Xtal oscillator */
++        wait_ms(1);                      /* let the crystal osc start */
++        sx125x_write(rf_chain, 0x00, 3); /* Enable RX (PLL+FE) */
+         do {
+             if (cpt_attempts >= PLL_LOCK_MAX_ATTEMPTS) {
+                 DEBUG_MSG("ERROR: FAIL TO LOCK PLL\n");
+                 return -1;
+             }
+-            sx125x_write(rf_chain, 0x00, 1); /* enable Xtal oscillator */
+-            sx125x_write(rf_chain, 0x00, 3); /* Enable RX (PLL+FE) */
              ++cpt_attempts;
              DEBUG_PRINTF("Note: SX125x #%d PLL start (attempt %d)\n", rf_chain, cpt_attempts);
 -            wait_ms(1);
-+            wait_ms(5); /* was 1ms: give SX1257 PLL time to settle, independent of build speed / log level */
++            wait_ms(5); /* settle time between lock-bit polls */
          } while((sx125x_read(rf_chain, 0x11) & 0x02) == 0);
      } else {
          DEBUG_PRINTF("Note: SX125x #%d kept in standby mode\n", rf_chain);
