@@ -950,6 +950,24 @@ index b3046a9..a01f65b 100644
  /* -------------------------------------------------------------------------- */
  /* --- PRIVATE TYPES -------------------------------------------------------- */
  
+@@ -72,7 +72,7 @@ Maintainer: Michael Coracin
+ /* -------------------------------------------------------------------------- */
+ /* --- PRIVATE CONSTANTS ---------------------------------------------------- */
+ 
+-#define PLL_LOCK_MAX_ATTEMPTS 5
++#define PLL_LOCK_MAX_ATTEMPTS 20  /* was 5: 5x1ms too tight; PLL lock raced on fast (aarch64) builds */
+ 
+ const struct lgw_sx127x_FSK_bandwidth_s sx127x_FskBandwidths[] =
+ {
+@@ -467,7 +467,7 @@ int lgw_setup_sx125x(uint8_t rf_chain, uint8_t rf_clkout, bool rf_enable, uint8_
+             sx125x_write(rf_chain, 0x00, 3); /* Enable RX (PLL+FE) */
+             ++cpt_attempts;
+             DEBUG_PRINTF("Note: SX125x #%d PLL start (attempt %d)\n", rf_chain, cpt_attempts);
+-            wait_ms(1);
++            wait_ms(5); /* was 1ms: give SX1257 PLL time to settle, independent of build speed / log level */
+         } while((sx125x_read(rf_chain, 0x11) & 0x02) == 0);
+     } else {
+         DEBUG_PRINTF("Note: SX125x #%d kept in standby mode\n", rf_chain);
 diff --git a/libloragw/src/loragw_reg.c b/libloragw/src/loragw_reg.c
 index 14e23cd..6d8aab3 100644
 --- a/libloragw/src/loragw_reg.c
