@@ -959,7 +959,15 @@ index b3046a9..a01f65b 100644
  
  const struct lgw_sx127x_FSK_bandwidth_s sx127x_FskBandwidths[] =
  {
-@@ -460,16 +460,22 @@ int lgw_setup_sx125x(uint8_t rf_chain, uint8_t rf_clkout, bool rf_enable, uint8_
+@@ -396,6 +396,7 @@ int reset_sx127x(enum lgw_radio_type_e radio_type) {
+ /* --- PUBLIC FUNCTIONS DEFINITION ------------------------------------------ */
+ 
+ int lgw_setup_sx125x(uint8_t rf_chain, uint8_t rf_clkout, bool rf_enable, uint8_t rf_radio_type, uint32_t freq_hz) {
++    INFO_PRINTF("PLL-FIX build v3 (enable-once) rf_chain=%d\n", rf_chain);
+     uint32_t part_int = 0;
+     uint32_t part_frac = 0;
+     int cpt_attempts = 0;
+@@ -460,16 +461,22 @@ int lgw_setup_sx125x(uint8_t rf_chain, uint8_t rf_clkout, bool rf_enable, uint8_
          sx125x_write(rf_chain, 0x03,0xFF & part_frac); /* Least Significant Byte */
  
          /* start and PLL lock */
